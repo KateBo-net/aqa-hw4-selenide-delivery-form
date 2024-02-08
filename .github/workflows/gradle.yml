@@ -1,0 +1,26 @@
+name: Java CI with Gradle
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+      - name: Start SUT
+        # Запускаем SUT,
+        # в фоновом режиме не блокируем терминал для запуска тестов,
+        # обязательно должен быть для запуска SUT в CI
+        run: java -jar ./artifacts/app-card-delivery.jar &
+      - name: Build with Gradle
+        # Запускаем автотесты
+        run: ./gradlew test --info -Dselenide.headless=true
