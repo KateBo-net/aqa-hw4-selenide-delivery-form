@@ -3,11 +3,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Keys;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
 import static com.codeborne.selenide.Condition.*;
@@ -46,15 +44,13 @@ public class DeliveryFormTest {
     String notificationContentSelector = "[data-test-id=notification] .notification__content";
     String cityPopupSelector = ".input__popup .menu";
 
-    public void stepsToFillForm(String city, int dateAmount, String name, String phone, Boolean agreementClick) {
+    public void stepsToFillForm(String city, int dateAmount, String name, String phone) {
         $(citySelector).setValue(city);
         clearField(dateSelector);
         $(dateSelector).setValue(calculateDate(dateAmount));
         $(nameSelector).setValue(name);
         $(phoneSelector).setValue(phone);
-        if (agreementClick) {
-            $(agreementSelector).click();
-        }
+        $(agreementSelector).click();
         $(buttonSelector).shouldHave(text(sendButtonText)).click();
     }
 
@@ -69,11 +65,7 @@ public class DeliveryFormTest {
     }
 
     String calculateDate(int amount) {
-        Calendar calendar = new GregorianCalendar();
-        DateFormat df = new SimpleDateFormat("dd.MM.yyyy");
-        calendar.add(Calendar.DAY_OF_MONTH, amount);
-        String formattedDate = df.format(calendar.getTime());
-        return formattedDate;
+        return LocalDate.now().plusDays(amount).format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
     }
 
     void clearField(String selector) {
@@ -88,7 +80,7 @@ public class DeliveryFormTest {
 
     @Test
     void shouldSendApplication() {
-        stepsToFillForm(city, availableDate, name, phone, true);
+        stepsToFillForm(city, availableDate, name, phone);
         $(notificationTitleSelector)
                 .should(visible, Duration.ofSeconds(15)).shouldHave(text(notificationTitle));
         $(notificationContentSelector).shouldHave(visible, text(notificationContent + calculateDate(availableDate)));
@@ -109,57 +101,62 @@ public class DeliveryFormTest {
 
     @Test
     void shouldNoPassValidationWithoutAgreement() {
-        stepsToFillForm(city, availableDate, name, phone, false);
+        $(citySelector).setValue(city);
+        clearField(dateSelector);
+        $(dateSelector).setValue(calculateDate(availableDate));
+        $(nameSelector).setValue(name);
+        $(phoneSelector).setValue(phone);
+        $(buttonSelector).shouldHave(text(sendButtonText)).click();
         $(agreementInvalidSelector).should(visible);
         $(notificationTitleSelector).should(hidden);
     }
 
     @Test
     void shouldValidateFieldCityEmpty() {
-        stepsToFillForm("", availableDate, name, phone, true);
-        $(cityInvalidSelector).shouldHave(text(emptyInputField));
+        stepsToFillForm("", availableDate, name, phone);
+        $(cityInvalidSelector).should(visible).shouldHave(text(emptyInputField));
     }
 
     @Test
     void shouldValidateFieldCityLowerCase() {
-        stepsToFillForm(city.toLowerCase(), availableDate, name, phone, true);
+        stepsToFillForm(city.toLowerCase(), availableDate, name, phone);
         $(cityInvalidSelector).shouldNot(exist);
     }
 
     @Test
     void shouldValidateFieldCityUpperCase() {
-        stepsToFillForm(city.toUpperCase(), availableDate, name, phone, true);
+        stepsToFillForm(city.toUpperCase(), availableDate, name, phone);
         $(cityInvalidSelector).shouldNot(exist);
     }
 
     @Test
     void shouldValidateFieldCityNotACentre() {
         //not an administrative center
-        stepsToFillForm("Химки", availableDate, name, phone, true);
+        stepsToFillForm("Химки", availableDate, name, phone);
         $(cityInvalidSelector).shouldHave(text(invalidCityMsg));
     }
 
     @Test
     void shouldValidateFieldCityMissedAHyphen() {
-        stepsToFillForm("Ростов на дону", availableDate, name, phone, true);
+        stepsToFillForm("Ростов на дону", availableDate, name, phone);
         $(cityInvalidSelector).shouldHave(text(invalidCityMsg));
     }
 
     @Test
     void shouldValidateFieldCityLatin() {
-        stepsToFillForm("Moscow", availableDate, name, phone, true);
+        stepsToFillForm("Moscow", availableDate, name, phone);
         $(cityInvalidSelector).shouldHave(text(invalidCityMsg));
     }
 
     @Test
     void shouldValidateFieldCityNumbers() {
-        stepsToFillForm("Челябинск74", availableDate, name, phone, true);
+        stepsToFillForm("Челябинск74", availableDate, name, phone);
         $(cityInvalidSelector).shouldHave(text(invalidCityMsg));
     }
 
     @Test
     void shouldValidateFieldCitySpecialChar() {
-        stepsToFillForm("?'%", availableDate, name, phone, true);
+        stepsToFillForm("?'%", availableDate, name, phone);
         $(cityInvalidSelector).shouldHave(text(invalidCityMsg));
     }
 
@@ -171,13 +168,13 @@ public class DeliveryFormTest {
 
     @Test
     void shouldValidateFieldDateBeforeAvailableDate() {
-        stepsToFillForm(city, availableDate - 1, name, phone, true);
+        stepsToFillForm(city, availableDate - 1, name, phone);
         $(dateInvalidSelector).shouldHave(text(invalidDateMsg));
     }
 
     @Test
     void shouldValidateFieldDateAfterAvailableDate() {
-        stepsToFillForm(city, availableDate + 1, name, phone, true);
+        stepsToFillForm(city, availableDate + 1, name, phone);
         $(dateInvalidSelector).shouldNot(exist);
     }
 
@@ -225,91 +222,91 @@ public class DeliveryFormTest {
 
     @Test
     void shouldValidateFieldNameEmpty() {
-        stepsToFillForm(city, availableDate, "", phone, true);
+        stepsToFillForm(city, availableDate, "", phone);
         $(nameInvalidSelector).shouldHave(text(emptyInputField));
     }
 
     @Test
     void shouldValidateFieldNameWithHyphen() {
-        stepsToFillForm(city, availableDate, "Петрова Эмилия-Анна", phone, true);
+        stepsToFillForm(city, availableDate, "Петрова Эмилия-Анна", phone);
         $(nameInvalidSelector).shouldNot(exist);
     }
 
     @Test
     void shouldValidateFieldNameLowerCase() {
-        stepsToFillForm(city, availableDate, name.toLowerCase(), phone, true);
+        stepsToFillForm(city, availableDate, name.toLowerCase(), phone);
         $(nameInvalidSelector).shouldNot(exist);
     }
 
     @Test
     void shouldValidateFieldNameUpperCase() {
-        stepsToFillForm(city, availableDate, name.toUpperCase(), phone, true);
+        stepsToFillForm(city, availableDate, name.toUpperCase(), phone);
         $(nameInvalidSelector).shouldNot(exist);
     }
 
     @Test
     void shouldValidateFieldNameLatin() {
-        stepsToFillForm(city, availableDate, "Ivanov Ivan", phone, true);
+        stepsToFillForm(city, availableDate, "Ivanov Ivan", phone);
         $(nameInvalidSelector).shouldHave(text(invalidNameMsg));
     }
 
     @Test
     void shouldValidateFieldNameNumbers() {
-        stepsToFillForm(city, availableDate, "Иванов Иван78", phone, true);
+        stepsToFillForm(city, availableDate, "Иванов Иван78", phone);
         $(nameInvalidSelector).shouldHave(text(invalidNameMsg));
     }
 
     @Test
     void shouldValidateFieldNameSpecialChar() {
-        stepsToFillForm(city, availableDate, "$%^&*", phone, true);
+        stepsToFillForm(city, availableDate, "$%^&*", phone);
         $(nameInvalidSelector).shouldHave(text(invalidNameMsg));
     }
 
     @Test
     void shouldValidateFieldPhoneEmpty() {
-        stepsToFillForm(city, availableDate, name, "", true);
+        stepsToFillForm(city, availableDate, name, "");
         $(phoneInvalidSelector).shouldHave(text(emptyInputField));
     }
 
     @Test
     void shouldValidateFieldPhoneLess11Digits() {
-        stepsToFillForm(city, availableDate, name, "+7900112233", true);
+        stepsToFillForm(city, availableDate, name, "+7900112233");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
     @Test
     void shouldValidateFieldPhoneMore11Digits() {
-        stepsToFillForm(city, availableDate, name, phone + "1", true);
+        stepsToFillForm(city, availableDate, name, phone + "1");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
     @Test
     void shouldValidateFieldPhoneWithoutPlus() {
-        stepsToFillForm(city, availableDate, name, "79001122333", true);
+        stepsToFillForm(city, availableDate, name, "79001122333");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
     @Test
     void shouldValidateFieldPhonePlusAtTheEnd() {
-        stepsToFillForm(city, availableDate, name, "79001122333+", true);
+        stepsToFillForm(city, availableDate, name, "79001122333+");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
     @Test
     void shouldValidateFieldPhoneLatin() {
-        stepsToFillForm(city, availableDate, name, "phone79991122333", true);
+        stepsToFillForm(city, availableDate, name, "phone79991122333");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
     @Test
     void shouldValidateFieldPhoneCyrillic() {
-        stepsToFillForm(city, availableDate, name, "тел79991122333", true);
+        stepsToFillForm(city, availableDate, name, "тел79991122333");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
     @Test
     void shouldValidateFieldPhoneSpecialChar() {
-        stepsToFillForm(city, availableDate, name, "-%^79991122333", true);
+        stepsToFillForm(city, availableDate, name, "-%^79991122333");
         $(phoneInvalidSelector).shouldHave(text(invalidPhoneMsg));
     }
 
@@ -318,10 +315,20 @@ public class DeliveryFormTest {
         $(citySelector).setValue("ро");
         $(cityPopupSelector).should(visible);
         $$(".input__popup .menu .menu-item").find(text(city)).click();
+        clearField(dateSelector);
+        $(dateSelector).setValue(calculateDate(availableDate));
+        $(nameSelector).setValue(name);
+        $(phoneSelector).setValue(phone);
+        $(agreementSelector).click();
+        $(buttonSelector).shouldHave(text(sendButtonText)).click();
+        $(notificationTitleSelector)
+                .should(visible, Duration.ofSeconds(15)).shouldHave(text(notificationTitle));
+        $(notificationContentSelector).shouldHave(visible, text(notificationContent + calculateDate(availableDate)));
 
         String actual = $(citySelector).getValue();
         String expected = city;
         Assertions.assertEquals(expected, actual);
+
     }
 
     @Test
@@ -333,24 +340,27 @@ public class DeliveryFormTest {
     @Test
     void shouldSelectDateFromDatePicker() {
         int daysCount = 7;
-        Calendar calendar = new GregorianCalendar();
-        DateFormat day = new SimpleDateFormat("d");
-        DateFormat month = new SimpleDateFormat("LLLL yyyy", Locale.forLanguageTag("ru"));
-        calendar.add(Calendar.DAY_OF_MONTH, daysCount);
-        String formattedDay = day.format(calendar.getTime());
-        String formattedMonth = month.format(calendar.getTime());
+        var date = LocalDate.now().plusDays(daysCount);
+        String formattedDay = date.format(DateTimeFormatter.ofPattern("d"));
+        String formattedMonth = date.format(DateTimeFormatter.ofPattern("LLLL yyyy", Locale.forLanguageTag("ru")));
 
+        $(citySelector).setValue(city);
         $(".input__icon").click();
         $(".popup .calendar").should(visible);
         String nameCalendar = $(".calendar__name")
                 .should(visible)
                 .text().toLowerCase();
-        if (nameCalendar.equals(formattedMonth)) {
-            $$(".calendar__day").find(text(formattedDay)).click();
-        } else {
+        if (!nameCalendar.equals(formattedMonth)) {
             $("[data-step='1']").click();
-            $$(".calendar__day").find(text(formattedDay)).click();
         }
+        $$(".calendar__day").find(text(formattedDay)).click();
+        $(nameSelector).setValue(name);
+        $(phoneSelector).setValue(phone);
+        $(agreementSelector).click();
+        $(buttonSelector).shouldHave(text(sendButtonText)).click();
+        $(notificationTitleSelector)
+                .should(visible, Duration.ofSeconds(15)).shouldHave(text(notificationTitle));
+        $(notificationContentSelector).shouldHave(visible, text(notificationContent + calculateDate(daysCount)));
 
         String actual = $(dateSelector).getValue();
         String expected = calculateDate(daysCount);
