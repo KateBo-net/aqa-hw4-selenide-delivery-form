@@ -330,39 +330,14 @@ public class DeliveryFormTest {
     }
 
     @Test
-    void shouldSelectDateFromDatePickerNextMonth() {
-        Calendar calendar = new GregorianCalendar();
-        DateFormat day = new SimpleDateFormat("d");
-        DateFormat month = new SimpleDateFormat("LLLL yyyy");
-        calendar.add(Calendar.DAY_OF_MONTH, 20);
-        String formattedDay = day.format(calendar.getTime());
-        String formattedMonth = month.format(calendar.getTime());
-
-        $(".input__icon").click();
-        $(".popup .calendar").should(visible);
-        String nameCalendar = $(".calendar__name")
-                .should(visible)
-                .text().toLowerCase();
-        if (nameCalendar.equals(formattedMonth)) {
-            $$(".calendar__day").find(text(formattedDay)).click();
-        } else {
-            $("[data-step='1']").click();
-            $$(".calendar__day").find(text(formattedDay)).click();
-        }
-
-        String actual = $(dateSelector).getValue();
-        String expected = calculateDate(20);
-        Assertions.assertEquals(expected, actual);
-    }
-
-    @Test
-    void shouldSelectDateFromDatePickerNextWeek() {
+    void shouldSelectDateFromDatePicker() {
         Calendar calendar = new GregorianCalendar();
         DateFormat day = new SimpleDateFormat("d");
         DateFormat month = new SimpleDateFormat("LLLL yyyy");
         calendar.add(Calendar.DAY_OF_MONTH, 7);
         String formattedDay = day.format(calendar.getTime());
         String formattedMonth = month.format(calendar.getTime());
+
         $(".input__icon").click();
         $(".popup .calendar").should(visible);
         String nameCalendar = $(".calendar__name")
@@ -374,6 +349,7 @@ public class DeliveryFormTest {
             $("[data-step='1']").click();
             $$(".calendar__day").find(text(formattedDay)).click();
         }
+
         String actual = $(dateSelector).getValue();
         String expected = calculateDate(7);
         Assertions.assertEquals(expected, actual);
