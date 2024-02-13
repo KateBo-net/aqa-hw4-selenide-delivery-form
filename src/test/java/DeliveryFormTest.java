@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Locale;
 
 import static com.codeborne.selenide.Condition.*;
 import static com.codeborne.selenide.Selenide.*;
@@ -331,10 +332,11 @@ public class DeliveryFormTest {
 
     @Test
     void shouldSelectDateFromDatePicker() {
+        int daysCount = 7;
         Calendar calendar = new GregorianCalendar();
         DateFormat day = new SimpleDateFormat("d");
-        DateFormat month = new SimpleDateFormat("LLLL yyyy");
-        calendar.add(Calendar.DAY_OF_MONTH, 7);
+        DateFormat month = new SimpleDateFormat("LLLL yyyy", Locale.forLanguageTag("ru"));
+        calendar.add(Calendar.DAY_OF_MONTH, daysCount);
         String formattedDay = day.format(calendar.getTime());
         String formattedMonth = month.format(calendar.getTime());
 
@@ -351,7 +353,7 @@ public class DeliveryFormTest {
         }
 
         String actual = $(dateSelector).getValue();
-        String expected = calculateDate(7);
+        String expected = calculateDate(daysCount);
         Assertions.assertEquals(expected, actual);
     }
 }
