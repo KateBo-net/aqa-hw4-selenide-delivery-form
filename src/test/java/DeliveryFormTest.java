@@ -326,7 +326,7 @@ public class DeliveryFormTest {
     @Test
     void shouldNotDisplayedDropDownList() {
         $(citySelector).setValue("к");
-        $(citySelector).should(hidden);
+        $(cityPopupSelector).should(hidden);
     }
 
     @Test
